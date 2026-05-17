@@ -8,6 +8,19 @@ import re
 import string
 import math
 from collections import Counter
+# pyrefly: ignore [missing-import]
+import spacy
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Load spaCy NLP model (English core)
+import sys
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    import subprocess
+    subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
+    nlp = spacy.load("en_core_web_sm")
 
 # ── PDF Parsing ──────────────────────────────────────────────────────
 def extract_text_from_pdf(file_bytes: bytes) -> str:
@@ -39,54 +52,41 @@ def extract_text_from_docx(file_bytes: bytes) -> str:
         raise ValueError(f"DOCX parsing failed: {str(e)}")
 
 
-# ── Text Preprocessing ───────────────────────────────────────────────
-STOPWORDS = {
-    "the","a","an","and","or","but","in","on","at","to","for","of","with",
-    "is","are","was","were","be","been","have","has","had","do","does","did",
-    "will","would","could","should","may","might","shall","can","need","must",
-    "i","you","he","she","it","we","they","this","that","these","those","my",
-    "your","his","her","our","their","its","not","no","nor","so","yet","both",
-    "either","each","few","more","most","other","some","such","than","then",
-    "too","very","just","as","if","while","because","since","when","where"
-}
-
+# ── Text Preprocessing with spaCy ──────────────────────────────────────
 def preprocess(text: str) -> list:
-    """Normalize, clean, and tokenize text into meaningful words."""
-    # Lowercase
+    """Normalize, clean, and tokenize text using spaCy lemmatization."""
+    # Lowercase and remove special characters
     text = text.lower()
-    # Remove special characters (keep alphanumeric + spaces)
     text = re.sub(r'[^a-z0-9\s\+#\.]', ' ', text)
-    # Tokenize
-    tokens = text.split()
-    # Remove stopwords and very short tokens
-    tokens = [t for t in tokens if t not in STOPWORDS and len(t) > 2]
+    
+    # Process text through spaCy NLP pipeline
+    doc = nlp(text)
+    
+    # Extract lemmas, ignoring stopwords and punctuation
+    tokens = [token.lemma_ for token in doc if not token.is_stop and not token.is_punct and len(token.lemma_) > 2]
     return tokens
 
 
-# ── TF-IDF Similarity ────────────────────────────────────────────────
+# ── TF-IDF Similarity with Scikit-Learn ────────────────────────────────
 def compute_tfidf_similarity(resume_tokens: list, jd_tokens: list) -> float:
     """
     Compute cosine similarity between resume and job description
-    using TF-IDF vectors (manual implementation, no sklearn needed).
-    Returns a float between 0 and 1.
+    using Scikit-Learn's TF-IDF Vectorizer and Cosine Similarity.
     """
-    def tf(tokens):
-        count = Counter(tokens)
-        total = len(tokens) if tokens else 1
-        return {word: freq / total for word, freq in count.items()}
+    resume_str = " ".join(resume_tokens)
+    jd_str = " ".join(jd_tokens)
+    
+    if not resume_str or not jd_str:
+        return 0.0
 
-    def cosine_similarity(vec1: dict, vec2: dict) -> float:
-        common = set(vec1.keys()) & set(vec2.keys())
-        numerator = sum(vec1[w] * vec2[w] for w in common)
-        mag1 = math.sqrt(sum(v ** 2 for v in vec1.values()))
-        mag2 = math.sqrt(sum(v ** 2 for v in vec2.values()))
-        if mag1 == 0 or mag2 == 0:
-            return 0.0
-        return numerator / (mag1 * mag2)
-
-    tf_resume = tf(resume_tokens)
-    tf_jd     = tf(jd_tokens)
-    return round(cosine_similarity(tf_resume, tf_jd) * 100, 2)
+    vectorizer = TfidfVectorizer()
+    # Fit and transform the texts into TF-IDF vectors
+    tfidf_matrix = vectorizer.fit_transform([resume_str, jd_str])
+    
+    # Calculate cosine similarity between the two vectors
+    similarity_score = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
+    
+    return round(similarity_score * 100, 2)
 
 
 # ── ATS Score Engine ─────────────────────────────────────────────────

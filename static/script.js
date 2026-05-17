@@ -5,22 +5,22 @@
  */
 
 // ─── DOM REFERENCES ────────────────────────────────────────────────
-const navbar        = document.getElementById('navbar');
-const hamburger     = document.getElementById('hamburger');
-const dropzone      = document.getElementById('dropzone');
-const fileInput     = document.getElementById('fileInput');
-const filePreview   = document.getElementById('filePreview');
+const navbar = document.getElementById('navbar');
+const hamburger = document.getElementById('hamburger');
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const filePreview = document.getElementById('filePreview');
 const dropzoneInner = document.getElementById('dropzoneInner');
-const fileName      = document.getElementById('fileName');
-const fileSize      = document.getElementById('fileSize');
-const fileRemove    = document.getElementById('fileRemove');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+const fileRemove = document.getElementById('fileRemove');
 const uploadSuccess = document.getElementById('uploadSuccess');
-const jobDescription= document.getElementById('jobDescription');
-const charCount     = document.getElementById('charCount');
-const analyzeBtn    = document.getElementById('analyzeBtn');
-const loadingState  = document.getElementById('loadingState');
-const resultsSection= document.getElementById('results');
-const reanalyzeBtn  = document.getElementById('reanalyzeBtn');
+const jobDescription = document.getElementById('jobDescription');
+const charCount = document.getElementById('charCount');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const loadingState = document.getElementById('loadingState');
+const resultsSection = document.getElementById('results');
+const reanalyzeBtn = document.getElementById('reanalyzeBtn');
 
 // State
 let uploadedFile = null;
@@ -69,7 +69,7 @@ function handleFile(file) {
   const allowed = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
   const ext = file.name.split('.').pop().toLowerCase();
 
-  if (!['pdf','docx','doc'].includes(ext)) {
+  if (!['pdf', 'docx', 'doc'].includes(ext)) {
     showToast('Please upload a PDF or DOCX file.', 'error');
     return;
   }
@@ -87,7 +87,7 @@ function handleFile(file) {
 
   // Show preview, hide drop zone content
   dropzoneInner.style.display = 'none';
-  filePreview.style.display   = 'flex';
+  filePreview.style.display = 'flex';
 
   // Show success message
   uploadSuccess.style.display = 'flex';
@@ -99,7 +99,7 @@ fileRemove.addEventListener('click', () => {
   uploadedFile = null;
   fileInput.value = '';
   dropzoneInner.style.display = 'flex';
-  filePreview.style.display   = 'none';
+  filePreview.style.display = 'none';
   uploadSuccess.style.display = 'none';
 });
 
@@ -140,7 +140,7 @@ analyzeBtn.addEventListener('click', async () => {
     });
 
     const data = await response.json();
-    
+
     // Wait for the visual simulation to finish so the UI looks nice
     await simulationPromise;
 
@@ -157,7 +157,7 @@ analyzeBtn.addEventListener('click', async () => {
     document.querySelector('.btn-text').style.display = 'flex';
     document.querySelector('.btn-loader').style.display = 'none';
     loadingState.style.display = 'none';
-    
+
     showToast(error.message, 'error');
   }
 });
@@ -184,12 +184,12 @@ function startLoading() {
   // Reset steps
   stepIds.forEach(id => {
     const el = document.getElementById(id);
-    el.classList.remove('active','done');
+    el.classList.remove('active', 'done');
     el.querySelector('i').className = 'fas fa-circle';
   });
 
   document.getElementById('spinnerPct').textContent = '0%';
-  document.getElementById('loadingMsg').textContent  = loadingMessages[0];
+  document.getElementById('loadingMsg').textContent = loadingMessages[0];
 }
 
 // Simulate step-by-step loading progress
@@ -242,13 +242,13 @@ function generateFakeResults(jd) {
   const unique = [...new Set(words.map(w => w.toLowerCase()))].filter(w => w.length > 3);
 
   // Simulated scores
-  const atsScore   = randomBetween(62, 94);
+  const atsScore = randomBetween(62, 94);
   const matchScore = randomBetween(58, 91);
   const skillScore = randomBetween(55, 90);
 
   // Common tech missing skills
-  const possibleMissing = ['Docker','AWS','Kubernetes','GraphQL','TensorFlow','REST APIs',
-    'Redis','PostgreSQL','MongoDB','FastAPI','TypeScript','CI/CD','Spark','Airflow','Kafka'];
+  const possibleMissing = ['Docker', 'AWS', 'Kubernetes', 'GraphQL', 'TensorFlow', 'REST APIs',
+    'Redis', 'PostgreSQL', 'MongoDB', 'FastAPI', 'TypeScript', 'CI/CD', 'Spark', 'Airflow', 'Kafka'];
   const missingSkills = shuffle(possibleMissing).slice(0, randomBetween(4, 8));
 
   // Keywords found in JD
@@ -260,11 +260,11 @@ function generateFakeResults(jd) {
 
   // Strength scores
   const strengths = [
-    { name: 'Technical Skills',    score: randomBetween(60, 95) },
-    { name: 'Soft Skills',         score: randomBetween(55, 85) },
-    { name: 'Formatting',          score: randomBetween(70, 98) },
-    { name: 'Experience Relevance',score: randomBetween(55, 90) },
-    { name: 'Education Match',     score: randomBetween(60, 95) },
+    { name: 'Technical Skills', score: randomBetween(60, 95) },
+    { name: 'Soft Skills', score: randomBetween(55, 85) },
+    { name: 'Formatting', score: randomBetween(70, 98) },
+    { name: 'Experience Relevance', score: randomBetween(55, 90) },
+    { name: 'Education Match', score: randomBetween(60, 95) },
   ];
 
   // Suggestions
@@ -298,9 +298,9 @@ function showResults(data) {
   }, 200);
 
   // Render each section
-  renderCircularScore('atsFill',    'atsValue',   'atsStatus',   data.atsScore);
-  renderCircularScore('matchFill',  'matchValue', 'matchStatus', data.matchScore);
-  renderCircularScore('skillFill',  'skillValue', 'skillStatus', data.skillScore);
+  renderCircularScore('atsFill', 'atsValue', 'atsStatus', data.atsScore);
+  renderCircularScore('matchFill', 'matchValue', 'matchStatus', data.matchScore);
+  renderCircularScore('skillFill', 'skillValue', 'skillStatus', data.skillScore);
 
   renderStrengths(data.strengths);
   renderMissingSkills(data.missingSkills);
@@ -310,8 +310,8 @@ function showResults(data) {
 
 // Animate a circular progress ring
 function renderCircularScore(fillId, valueId, statusId, score) {
-  const fill   = document.getElementById(fillId);
-  const value  = document.getElementById(valueId);
+  const fill = document.getElementById(fillId);
+  const value = document.getElementById(valueId);
   const status = document.getElementById(statusId);
 
   // SVG circumference for r=50: 2 * π * 50 ≈ 314
