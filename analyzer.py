@@ -8,19 +8,8 @@ import re
 import string
 import math
 from collections import Counter
-# pyrefly: ignore [missing-import]
-import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
-# Load spaCy NLP model (English core)
-import sys
-try:
-    nlp = spacy.load("en_core_web_sm")
-except OSError:
-    import subprocess
-    subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
-    nlp = spacy.load("en_core_web_sm")
 
 # ── PDF Parsing ──────────────────────────────────────────────────────
 def extract_text_from_pdf(file_bytes: bytes) -> str:
@@ -52,18 +41,38 @@ def extract_text_from_docx(file_bytes: bytes) -> str:
         raise ValueError(f"DOCX parsing failed: {str(e)}")
 
 
-# ── Text Preprocessing with spaCy ──────────────────────────────────────
+# ── Lightweight Text Preprocessing ──────────────────────────────────────
+# Simple English stopwords list
+STOPWORDS = {
+    "i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you", "your", "yours", 
+    "yourself", "yourselves", "he", "him", "his", "himself", "she", "her", "hers", 
+    "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves", 
+    "what", "which", "who", "whom", "this", "that", "these", "those", "am", "is", "are", 
+    "was", "were", "be", "been", "being", "have", "has", "had", "having", "do", "does", 
+    "did", "doing", "a", "an", "the", "and", "but", "if", "or", "because", "as", "until", 
+    "while", "of", "at", "by", "for", "with", "about", "against", "between", "into", 
+    "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", 
+    "in", "out", "on", "off", "over", "under", "again", "further", "then", "once", "here", 
+    "there", "when", "where", "why", "how", "all", "any", "both", "each", "few", "more", 
+    "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", 
+    "than", "too", "very", "s", "t", "can", "will", "just", "don", "should", "now"
+}
+
 def preprocess(text: str) -> list:
-    """Normalize, clean, and tokenize text using spaCy lemmatization."""
-    # Lowercase and remove special characters
+    """Normalize, clean, and tokenize text using lightweight string operations."""
+    # Lowercase
     text = text.lower()
+    # Keep only alphanumeric characters, spaces, and specific symbols (+, #, .)
     text = re.sub(r'[^a-z0-9\s\+#\.]', ' ', text)
     
-    # Process text through spaCy NLP pipeline
-    doc = nlp(text)
+    # Split by whitespace to get tokens
+    raw_tokens = text.split()
     
-    # Extract lemmas, ignoring stopwords and punctuation
-    tokens = [token.lemma_ for token in doc if not token.is_stop and not token.is_punct and len(token.lemma_) > 2]
+    # Filter stopwords, short words, and punctuation-only tokens
+    tokens = [
+        token for token in raw_tokens 
+        if token not in STOPWORDS and len(token) > 2 and not all(c in string.punctuation for c in token)
+    ]
     return tokens
 
 

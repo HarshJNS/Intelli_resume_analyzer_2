@@ -68,5 +68,7 @@ def analyze():
         return jsonify({"error": "An internal error occurred during analysis."}), 500
 
 if __name__ == '__main__':
-    # Run the Flask development server on port 5001
-    app.run(debug=True, port=5001)
+    # Render assigns a dynamic port via the PORT environment variable.
+    # We bind to 0.0.0.0 to make the app accessible externally.
+    port = int(os.environ.get("PORT", 5001))
+    app.run(host="0.0.0.0", port=port, debug=False)
